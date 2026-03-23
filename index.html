@@ -141,7 +141,9 @@ footer{text-align:center;margin-top:3rem;padding-top:1.5rem;border-top:1px solid
     <!-- Search -->
     <div id="sg" class="d-none d-md-flex">
       <i class="bi bi-search" style="color:var(--txt2);font-size:.78rem;flex-shrink:0"></i>
-      <input id="searchInput" type="search" placeholder="खोजें · Search…" autocomplete="off" oninput="onSearch()">
+      <input id="searchInput" type="search" placeholder="खोजें · Search…" autocomplete="off" oninput="onSearch(); resizeInput(this);" style="min-width:120px;">
+      <input type="checkbox" id="nonNormCb" onchange="onSearch()" style="margin-left:0.5rem;">
+      <label for="nonNormCb" style="font-size:0.8rem;color:var(--txt2);margin-right:0.3rem;">ने</label>
       <button id="clrBtn" onclick="clearSearch()" title="Clear"><i class="bi bi-x-lg"></i></button>
       <button class="sib" onclick="navMatch(-1)" title="Prev"><i class="bi bi-chevron-up"></i></button>
       <button class="sib" onclick="navMatch(1)" title="Next"><i class="bi bi-chevron-down"></i></button>
@@ -358,9 +360,15 @@ function renderContentFromNotes() {
 
 // Render on DOM ready
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', renderContentFromNotes);
+  document.addEventListener('DOMContentLoaded', () => {
+    renderContentFromNotes();
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) resizeInput(searchInput);
+  });
 } else {
   renderContentFromNotes();
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) resizeInput(searchInput);
 }
 </script>
 <script>
@@ -493,11 +501,26 @@ function hlNode(node,q,norm){
   }
 }
 
+function resizeInput(input) {
+  const span = document.createElement('span');
+  span.style.visibility = 'hidden';
+  span.style.position = 'absolute';
+  span.style.whiteSpace = 'pre';
+  span.style.font = window.getComputedStyle(input).font;
+  span.textContent = input.value || input.placeholder;
+  document.body.appendChild(span);
+  const width = span.getBoundingClientRect().width;
+  document.body.removeChild(span);
+  input.style.width = Math.max(width + 20, 120) + 'px';
+}
+
 function getQ(){
   const d=document.getElementById('searchInput');
   const m=document.getElementById('searchInput2');
-  if(d&&d.value.trim())return{q:d.value.trim(),norm:document.getElementById('normChk')?.checked};
-  if(m&&m.value.trim())return{q:m.value.trim(),norm:document.getElementById('normChk2')?.checked||document.getElementById('normChk')?.checked};
+  const nonNormCb = document.getElementById('nonNormCb');
+  const norm = ! (nonNormCb && nonNormCb.checked);
+  if(d&&d.value.trim())return{q:d.value.trim(),norm};
+  if(m&&m.value.trim())return{q:m.value.trim(),norm};
   return{q:'',norm:false};
 }
 
